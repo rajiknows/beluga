@@ -6,6 +6,9 @@ use std::net::TcpStream;
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     println!("Serving on http://127.0.0.1:8080");
+    // let textnode = TextNode::new("this is a text node".to_string(), TextType::Bold, None);
+    // let html = textnode.to_html_node().to_string();
+    // println!("{html}");
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
