@@ -29,7 +29,7 @@ impl Html for TextNode {
     fn to_html_node(&self) -> HtmlNode {
         let (typ, link) = match self.text_type {
             TextType::Plain => (HtmlNodeType::Para, None),
-            TextType::Bold => (HtmlNodeType::H, None),
+            TextType::Bold => (HtmlNodeType::H1, None),
             TextType::Italic => (HtmlNodeType::Para, None),
             TextType::Code => (HtmlNodeType::Para, None),
             TextType::Link => (HtmlNodeType::Ahref, self.link.clone()),

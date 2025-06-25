@@ -1,16 +1,18 @@
 #[derive(Debug)]
 pub enum HtmlNodeType {
     Para,
-    H,
+    H1,
+    H2,
+    H3,
     Ahref,
     Img,
 }
 
 #[derive(Debug)]
 pub struct HtmlNode {
-    typ: HtmlNodeType,
-    text: String,
-    link: Option<String>,
+    pub typ: HtmlNodeType,
+    pub text: String,
+    pub link: Option<String>,
 }
 
 impl HtmlNode {
@@ -26,7 +28,9 @@ impl HtmlNode {
 impl ToString for HtmlNode {
     fn to_string(&self) -> String {
         match self.typ {
-            HtmlNodeType::H => format!("<h>{}</h>", self.text),
+            HtmlNodeType::H1 => format!("<h1>{}</h1>", self.text),
+            HtmlNodeType::H2 => format!("<h2>{}</h2>", self.text),
+            HtmlNodeType::H3 => format!("<h3>{}</h3>", self.text),
             HtmlNodeType::Para => format!("<p>{}</p>", self.text),
             HtmlNodeType::Ahref => {
                 if let Some(link) = &self.link {

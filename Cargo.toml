@@ -9,3 +9,4 @@ name="ssg"
 path = "src/main.rs"
 
 [dependencies]
+tempfile = "3.20.0"
