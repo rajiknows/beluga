@@ -27,7 +27,15 @@ impl TextNode {
 
 impl Html for TextNode {
     fn to_html_node(&self) -> HtmlNode {
-        let node = HtmlNode::new(HtmlNodeType::Para, &self.text, &self.link, &None);
-        return node;
+        let (typ, link) = match self.text_type {
+            TextType::Plain => (HtmlNodeType::Para, None),
+            TextType::Bold => (HtmlNodeType::H, None),
+            TextType::Italic => (HtmlNodeType::Para, None),
+            TextType::Code => (HtmlNodeType::Para, None),
+            TextType::Link => (HtmlNodeType::Ahref, self.link.clone()),
+            TextType::Img => (HtmlNodeType::Img, self.link.clone()),
+        };
+
+        HtmlNode::new(typ, &self.text, link)
     }
 }
