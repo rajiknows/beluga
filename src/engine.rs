@@ -6,7 +6,7 @@ use std::{
 use crate::html::HtmlNode;
 use crate::html::HtmlNodeType;
 
-fn process_file_to_vec_of_nodes(file: File) -> Vec<HtmlNode> {
+pub fn process_file_to_vec_of_nodes(file: File) -> Vec<HtmlNode> {
     let reader = BufReader::new(file);
     let mut nodes = Vec::new();
     let mut in_code_block = false;
