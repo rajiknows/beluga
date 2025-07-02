@@ -3,8 +3,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use crate::html::HtmlNode;
-use crate::html::HtmlNodeType;
+use crate::beluga::html::{HtmlNode, HtmlNodeType};
 
 pub fn process_file_to_vec_of_nodes(file: File) -> Vec<HtmlNode> {
     let reader = BufReader::new(file);

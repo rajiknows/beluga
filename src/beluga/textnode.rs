@@ -1,4 +1,5 @@
-use crate::html::{Html, HtmlNode, HtmlNodeType};
+use crate::beluga::html;
+use html::{Html, HtmlNode, HtmlNodeType};
 
 pub enum TextType {
     Plain,

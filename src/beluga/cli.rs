@@ -1,4 +1,6 @@
-use std::io;
+use std::{io, path::Path};
+
+use crate::beluga::utils::copy_dir;
 
 /// We have three commands right here
 ///
@@ -7,10 +9,13 @@ use std::io;
 /// watch
 ///
 /// help
-///
 
-pub fn create_site(site_name: &String) {
-    // copy over the ../../site over to the current file path and give the next steps ...
+pub fn create(site_name: &String) -> io::Result<()> {
+    println!("creating new project {site_name}");
+    let current_path = std::env::current_dir()?;
+    let current_path = current_path.join(site_name);
+    copy_dir(Path::new("../../site"), &current_path)?;
+    Ok(())
 }
 
 pub fn watch() -> io::Result<()> {

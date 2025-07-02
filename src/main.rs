@@ -1,5 +1,7 @@
 mod beluga;
 
+use std::io;
+
 use crate::beluga::cli as luga;
 use clap::CommandFactory;
 use clap::{Parser, Subcommand};
@@ -25,23 +27,23 @@ enum Commands {
     Help,
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Init { name } => {
             println!("Initializing site: {}", name);
-            // logic here
-            luga::create_site(name);
+            luga::create(name);
+            Ok(())
         }
         Commands::Watch => {
             println!("Watching for changes...");
-            // logic here
             luga::watch()
         }
         Commands::Help => {
             Cli::command().print_help().unwrap();
             println!();
+            Ok(())
         }
     }
 }
