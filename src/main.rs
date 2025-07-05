@@ -1,8 +1,7 @@
 mod beluga;
 
-use std::io;
-
 use crate::beluga::cli as luga;
+use anyhow::Context;
 use clap::CommandFactory;
 use clap::{Parser, Subcommand};
 
@@ -27,18 +26,19 @@ enum Commands {
     Help,
 }
 
-fn main() -> io::Result<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Init { name } => {
             println!("Initializing site: {}", name);
-            luga::create(name);
+            luga::create(name)?;
             Ok(())
         }
         Commands::Watch => {
             println!("Watching for changes...");
-            luga::watch()
+            luga::watch(".").with_context(|| "failed to run in watch mode");
+            Ok(())
         }
         Commands::Help => {
             Cli::command().print_help().unwrap();
