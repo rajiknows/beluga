@@ -1,9 +1,4 @@
-use crate::beluga::{
-    engine::{HtmlNode, process_file_to_vec_of_nodes},
-    errors::BelugaError,
-    utils::copy_dir,
-};
-use anyhow::Result;
+use crate::beluga::{engine::process_file_to_vec_of_nodes, errors::BelugaError, utils::copy_dir};
 use notify::{RecursiveMode, Watcher};
 use std::{
     fs,
@@ -13,7 +8,6 @@ use std::{
 };
 use tera::{Context, Tera};
 use tiny_http::{Response, Server};
-use walkdir::WalkDir;
 
 pub fn create(site_name: &String) -> io::Result<()> {
     println!("creating new project {site_name}");
@@ -124,57 +118,90 @@ fn build_site(project_name: &str) -> Result<(), BelugaError> {
 
     let tera = Tera::new(&format!("{}/**/*.html", template_path.to_str().unwrap())).unwrap();
 
-    for entry in WalkDir::new(&src_path) {
-        let entry = entry.unwrap();
+    // Start the recursive build from the src_path
+    build_folder(&src_path, &src_path, &dist_path, &tera, None)?;
+    Ok(())
+}
+
+fn build_folder(
+    current_path: &Path,
+    src_path: &Path,
+    dist_path: &Path,
+    tera: &Tera,
+    folder_template: Option<String>,
+) -> Result<(), BelugaError> {
+    for entry in fs::read_dir(current_path)? {
+        let entry = entry?;
         let path = entry.path();
 
-        if path.is_file() && path.extension().unwrap_or_default() == "md" {
-            let file = fs::File::open(path).unwrap();
-            let nodes = process_file_to_vec_of_nodes(file);
-            let html_content = nodes
-                .iter()
-                .map(|node| node.to_string())
-                .collect::<String>();
-
-            let mut context = Context::new();
-            context.insert("content", &html_content);
-
-            let template_name = {
-                let relative_path = path.strip_prefix(&src_path).unwrap();
-                if relative_path.ancestors().count() > 2 {
-                    // In a subdirectory, use the directory name for the template.
-                    relative_path
-                        .parent()
-                        .unwrap() // Safe to unwrap here
-                        .file_name()
-                        .and_then(|s| s.to_str())
-                        .map(|s| format!("{}.html", s))
-                        .unwrap_or_else(|| "index.html".to_string())
-                } else {
-                    // In src root, use the file stem for the template.
-                    relative_path
-                        .file_stem()
-                        .and_then(|s| s.to_str())
-                        .map(|s| format!("{}.html", s))
-                        .unwrap_or_else(|| "index.html".to_string())
-                }
-            };
-
-            let rendered_html = tera.render(&template_name, &context).unwrap();
-
-            let relative_path = path.strip_prefix(&src_path).unwrap();
-            let dest_path = dist_path.join(relative_path).with_extension("html");
+        if path.is_file() {
+            let relative_path = path.strip_prefix(src_path).unwrap();
+            let dest_path = dist_path.join(relative_path);
 
             if let Some(parent) = dest_path.parent() {
                 fs::create_dir_all(parent).unwrap();
             }
 
-            let mut file = fs::File::create(&dest_path).unwrap();
-            file.write_all(rendered_html.as_bytes()).unwrap();
+            if path.extension().unwrap_or_default() == "md" {
+                build_file(
+                    path.as_path(),
+                    src_path,
+                    dist_path,
+                    tera,
+                    folder_template.clone(),
+                )?;
+            } else {
+                fs::copy(&path, &dest_path).unwrap();
+            }
         } else if path.is_dir() {
-            // if it is a folder ...
-            for entry in WalkDir::new(path) {}
+            let new_folder_template = path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .map(|s| format!("{}.html", s));
+            build_folder(&path, src_path, dist_path, tera, new_folder_template)?;
         }
     }
+    Ok(())
+}
+
+fn build_file(
+    file_path: &Path,
+    src_path: &Path,
+    dist_path: &Path,
+    tera: &Tera,
+    folder_template: Option<String>,
+) -> Result<(), BelugaError> {
+    let file = fs::File::open(file_path).unwrap();
+    let nodes = process_file_to_vec_of_nodes(file);
+    let html_content = nodes
+        .iter()
+        .map(|node| node.to_string())
+        .collect::<String>();
+
+    let mut context = Context::new();
+    context.insert("content", &html_content);
+
+    let template_name = if let Some(tmpl) = folder_template {
+        tmpl
+    } else {
+        file_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| format!("{}.html", s))
+            .unwrap_or_else(|| "index.html".to_string())
+    };
+
+    let rendered_html = tera.render(&template_name, &context).unwrap();
+
+    let relative_path = file_path.strip_prefix(src_path).unwrap();
+    let dest_path = dist_path.join(relative_path).with_extension("html");
+
+    if let Some(parent) = dest_path.parent() {
+        fs::create_dir_all(parent).unwrap();
+    }
+
+    let mut file = fs::File::create(&dest_path).unwrap();
+    file.write_all(rendered_html.as_bytes()).unwrap();
+
     Ok(())
 }
