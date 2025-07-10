@@ -72,20 +72,20 @@ impl HtmlNode {
 impl ToString for HtmlNode {
     fn to_string(&self) -> String {
         match self.typ {
-            HtmlNodeType::H1 => format!("<h1>{}</h1>", self.text),
-            HtmlNodeType::H2 => format!("<h2>{}</h2>", self.text),
-            HtmlNodeType::H3 => format!("<h3>{}</h3>", self.text),
-            HtmlNodeType::Para => format!("<p>{}</p>", self.text),
+            HtmlNodeType::H1 => format!("<h1>{}</h1>\n", self.text),
+            HtmlNodeType::H2 => format!("<h2>{}</h2>\n", self.text),
+            HtmlNodeType::H3 => format!("<h3>{}</h3>\n", self.text),
+            HtmlNodeType::Para => format!("<p>{}</p>\n", self.text),
             HtmlNodeType::Ahref => {
                 if let Some(link) = &self.link {
-                    format!(r#"<a href="{}">{}</a>"#, link, self.text)
+                    format!(r#"<a href=\"{}\">{}</a>\n"#, link, self.text)
                 } else {
-                    self.text.clone()
+                    format!("{}\n", self.text.clone())
                 }
             }
             HtmlNodeType::Img => {
                 if let Some(link) = &self.link {
-                    format!(r#"<img src="{}" alt="{}"/>"#, link, self.text)
+                    format!(r#"<img src=\"{}\" alt=\"{}\"/>\n"#, link, self.text)
                 } else {
                     String::new()
                 }
