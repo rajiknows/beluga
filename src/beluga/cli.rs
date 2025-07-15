@@ -61,7 +61,7 @@ pub fn watch(project_name: &str) -> Result<(), BelugaError> {
     }
 }
 
-pub fn is_dist_ready(path: &str) -> bool {
+pub fn _is_dist_ready(path: &str) -> bool {
     let path = Path::new(path);
     path.join("dist").exists()
 }
@@ -139,6 +139,5 @@ fn build_site(project_name: &str) -> Result<(), BelugaError> {
             file.write_all(rendered_html.as_bytes()).unwrap();
         }
     }
-
     Ok(())
 }

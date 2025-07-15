@@ -76,7 +76,6 @@ dependencies = [
  "syn",
  "tempfile",
  "tiny_http",
- "walkdir",
 ]
 
 [[package]]
