@@ -2,6 +2,7 @@
 pub enum BelugaError {
     ProjectNotInitialised,
     IoError(std::io::Error),
+    Other(String),
 }
 
 impl std::fmt::Display for BelugaError {
@@ -9,6 +10,7 @@ impl std::fmt::Display for BelugaError {
         match self {
             BelugaError::ProjectNotInitialised => write!(f, "Project not initialised"),
             BelugaError::IoError(e) => write!(f, "IO Error: {}", e),
+            Self::Other(error_message) => write!(f, "error: {}", error_message),
         }
     }
 }
