@@ -1,9 +1,0 @@
-// we will perform schema type checking here
-
-content! {
-    Blog {
-        title: string,
-        pub_date: date,
-        cover_image: string,
-    }
-}
