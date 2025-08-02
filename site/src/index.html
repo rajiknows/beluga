@@ -1,0 +1,27 @@
+<!--  the content of the src/*.html is rendered as is -->
+<!--
+
+if there is a file with *.md the frontmatter will have the info about the template to pick up
+
+for content like blogs we will do this
+
+
+-->
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title></title>
+    </head>
+
+    <body>
+        <nav>
+            <a href="/index.html">Home</a>
+            <a href="/blog.html">Blog</a>
+            <a href="/projects.html">Projects</a>
+        </nav>
+        {{ content | safe }}
+    </body>
+</html>

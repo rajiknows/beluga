@@ -113,32 +113,6 @@ fn build_site(project_name: &str) -> Result<(), BelugaError> {
 
     build_folder(&src_path, &dist_path, &template_path)?;
     Ok(())
-
-    //for entry in fs::read_dir(src_path)? {
-    //    let entry = entry?;
-    //    let path = entry.path();
-    //
-    //    if path.is_file() && path.extension().unwrap_or_default() == "md" {
-    //        let file_stem = path.file_stem().unwrap().to_str().unwrap();
-    //        let template_name = format!("{}.html", file_stem);
-    //        let template_file_path = template_path.join(template_name);
-    //
-    //        let file = fs::File::open(&path).unwrap();
-    //        let nodes = process_file_to_vec_of_nodes(file);
-    //        let html_content = nodes
-    //            .iter()
-    //            .map(|node| node.to_string())
-    //            .collect::<String>();
-    //
-    //        let template_content = fs::read_to_string(template_file_path)?;
-    //        let rendered_html = template_content.replace("{{content}}", &html_content);
-    //
-    //        let dest_path = dist_path.join(format!("{}.html", file_stem));
-    //        let mut file = fs::File::create(&dest_path).unwrap();
-    //        file.write_all(rendered_html.as_bytes()).unwrap();
-    //    }
-    //}
-    //Ok(())
 }
 
 fn build_folder(
