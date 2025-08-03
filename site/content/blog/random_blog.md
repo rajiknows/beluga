@@ -1,3 +1,9 @@
+---
+name: random blog
+date: 4 aug 2025
+priority: 2
+---
+
 hey this is a random log
 
 sdasjdbas

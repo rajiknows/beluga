@@ -42,6 +42,7 @@ impl Html for TextNode {
         HtmlNode::new(typ, &self.text, link)
     }
 }
+
 #[derive(Debug)]
 pub enum HtmlNodeType {
     Para,

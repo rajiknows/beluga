@@ -110,8 +110,9 @@ fn build_site(project_name: &str) -> Result<(), BelugaError> {
     let src_path = base_path.join("src");
     let dist_path = base_path.join("dist");
     let template_path = base_path.join("templates");
+    let content_path = base_path.join("content/");
 
-    build_folder(&src_path, &dist_path, &template_path)?;
+    build_folder(&src_path, &dist_path, &template_path, &content_path)?;
     Ok(())
 }
 
@@ -119,10 +120,17 @@ fn build_folder(
     src_path: &Path,
     dist_path: &Path,
     template_path: &Path,
+    content_path: &Path,
 ) -> Result<(), BelugaError> {
     if !dist_path.exists() {
         fs::create_dir_all(dist_path)?;
     }
+
+    // search if there is static content from beluga.yml
+    // if there is .. then match the names in content/ and src/ they should be defined in the beluga.yml
+    //
+    //
+    // now one by one just make these md to html and put them in the respective path....
 
     for entry in fs::read_dir(src_path)? {
         let entry = entry?;

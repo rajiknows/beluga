@@ -1,4 +1,10 @@
 source: src
 out: dist
-assets: assets
-template: template
+template: templates
+content:
+    blog:
+        src_location: src/blogs
+        schema:
+            name: stirng
+            date: dateString
+            priority: number
