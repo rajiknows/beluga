@@ -1,7 +1,44 @@
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{BufRead, BufReader},
+    path::Path,
 };
+
+use gray_matter::engine::YAML;
+use gray_matter::GrayMatter;
+use rhai::{Dynamic, Engine, Scope};
+use serde::Deserialize;
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct Post {
+    pub title: String,
+    pub id: String,
+}
+
+fn get_content(content_path: &Path, dir: &str) -> Result<Vec<Dynamic>, Box<dyn std::error::Error>> {
+    let dir_path = content_path.join(dir);
+    let mut posts = Vec::new();
+
+    for entry in fs::read_dir(dir_path)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_file() {
+            let content = fs::read_to_string(&path)?;
+            let matter = GrayMatter::<YAML>::new();
+            let result = matter.parse_with_front_matter(&content);
+
+            if let Some(front_matter) = result.data {
+                let post: Post = front_matter.deserialize()?;
+                let mut map = rhai::Map::new();
+                map.insert("title".into(), post.title.into());
+                map.insert("id".into(), post.id.into());
+                map.insert("content".into(), result.content.into());
+                posts.push(Dynamic::from(map));
+            }
+        }
+    }
+    Ok(posts)
+}
 
 pub enum TextType {
     Plain,
@@ -99,6 +136,35 @@ pub trait Html {
     fn to_html_node(&self) -> HtmlNode;
 }
 
+pub fn process_beluga_template(
+    file_path: &str,
+    content_path: &Path,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut content = fs::read_to_string(file_path)?;
+    let mut engine = Engine::new();
+    let mut scope = Scope::new();
+
+    let content_path_clone = content_path.to_path_buf();
+    engine.register_fn("getContent", move |dir: &str| {
+        get_content(&content_path_clone, dir)
+    });
+
+    while let Some(start_index) = content.find("rust!(") {
+        if let Some(end_index) = content[start_index..].find(')') {
+            let end_index = start_index + end_index;
+            let script = &content[start_index + 6..end_index];
+
+            let result: String = engine.eval_with_scope(&mut scope, script)?;
+
+            content.replace_range(start_index..=end_index, &result);
+        } else {
+            break;
+        }
+    }
+
+    Ok(content)
+}
+
 pub fn process_file_to_vec_of_nodes(file: File) -> Vec<HtmlNode> {
     let reader = BufReader::new(file);
     let mut nodes = Vec::new();
@@ -148,10 +214,10 @@ pub fn process_file_to_vec_of_nodes(file: File) -> Vec<HtmlNode> {
                 line.trim_start_matches("# "),
                 None,
             ));
-        } else if line.starts_with("![") {
+        } else if line.starts_with("![ ") {
             // ![alt](url)
-            if let Some((alt, rest)) = line.strip_prefix("![").and_then(|s| s.split_once("](")) {
-                if let Some(link) = rest.strip_suffix(")") {
+            if let Some((alt, rest)) = line.strip_prefix("![ ").and_then(|s| s.split_once("](")) {
+                if let Some(link) = rest.strip_suffix(')') {
                     nodes.push(HtmlNode::new(
                         HtmlNodeType::Img,
                         alt.to_string(),
@@ -159,10 +225,10 @@ pub fn process_file_to_vec_of_nodes(file: File) -> Vec<HtmlNode> {
                     ));
                 }
             }
-        } else if line.starts_with("[") {
+        } else if line.starts_with('[') {
             // [text](url)
-            if let Some((text, rest)) = line.strip_prefix("[").and_then(|s| s.split_once("](")) {
-                if let Some(link) = rest.strip_suffix(")") {
+            if let Some((text, rest)) = line.strip_prefix('[').and_then(|s| s.split_once("](")) {
+                if let Some(link) = rest.strip_suffix(')') {
                     nodes.push(HtmlNode::new(
                         HtmlNodeType::Ahref,
                         text.to_string(),
@@ -186,15 +252,15 @@ fn nodes_to_html_file(nodes: Vec<HtmlNode>) -> String {
 }
 
 #[cfg(test)]
-mod nodes_to_html_tests {
+mod tests {
     use super::*;
     use std::io::Write;
-    use tempfile::NamedTempFile;
+    use tempfile::{tempdir, NamedTempFile};
 
     #[test]
     fn test_process_file_to_vec_of_nodes() {
         let mut file = NamedTempFile::new().unwrap();
-        writeln!(
+        write!(
             file,
             "# Heading 1\n\
              ## Heading 2\n\
@@ -248,6 +314,4 @@ mod nodes_to_html_tests {
         let html = nodes_to_html_file(nodes);
         assert!(html.contains("<h1>Title</h1>"));
         assert!(html.contains("<p>Paragraph here.</p>"));
-        assert!(html.contains(r#"<a href="https://test.com">Link</a>"#));
-    }
-}
+        assert!(html.contains(r#"<a href=\\

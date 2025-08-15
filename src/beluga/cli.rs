@@ -1,4 +1,8 @@
-use crate::beluga::{engine::process_file_to_vec_of_nodes, errors::BelugaError, utils::copy_dir};
+use crate::beluga::{
+    engine::{process_beluga_template, process_file_to_vec_of_nodes},
+    errors::BelugaError,
+    utils::copy_dir,
+};
 use notify::{RecursiveMode, Watcher};
 use std::{
     fs,
@@ -20,7 +24,6 @@ pub fn create(site_name: &String) -> io::Result<()> {
         r#"
         next steps:
         cd {}\n
-
         run the project:
         beluga watch
 
@@ -126,12 +129,6 @@ fn build_folder(
         fs::create_dir_all(dist_path)?;
     }
 
-    // search if there is static content from beluga.yml
-    // if there is .. then match the names in content/ and src/ they should be defined in the beluga.yml
-    //
-    //
-    // now one by one just make these md to html and put them in the respective path....
-
     for entry in fs::read_dir(src_path)? {
         let entry = entry?;
         let path = entry.path();
@@ -156,10 +153,20 @@ fn build_folder(
                 output_path,
                 html_template.replace("{{content}}", &html_content),
             )?;
+        } else if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("beluga") {
+            let file_stem = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .ok_or_else(|| BelugaError::Other("Invalid file stem".into()))?;
+
+            let html_content = process_beluga_template(path.to_str().unwrap(), content_path)?;
+
+            let output_path = dist_path.join(format!("{}.html", file_stem));
+            fs::write(output_path, html_content)?;
         } else if path.is_dir() {
             let rel_path = path.strip_prefix(src_path).unwrap();
             let sub_dist_path = dist_path.join(rel_path);
-            build_folder(&path, &sub_dist_path, template_path)?;
+            build_folder(&path, &sub_dist_path, template_path, content_path)?;
         }
     }
 
